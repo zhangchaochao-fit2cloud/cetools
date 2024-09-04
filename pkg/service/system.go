@@ -11,7 +11,10 @@ import (
 	"inspect/pkg/constant"
 	"inspect/pkg/dto"
 	"inspect/pkg/global"
+	"inspect/pkg/utils"
 	"inspect/pkg/utils/cmd"
+	network "net"
+	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -31,35 +34,47 @@ func NewISystemService() ISystemService {
 }
 
 type ISystemService interface {
-	LoadOsInfo() (*dto.OsInfo, error)
+	LoadMachineInfo() (*dto.MachineInfo, error)
 	LoadBaseInfo(ioOption string, netOption string) (*dto.SystemBaseInfo, error)
 	LoadCurrentInfo(ioOption string, netOption string) *dto.SystemCurrentInfo
 }
 
-func (s *SystemService) LoadOsInfo() (*dto.OsInfo, error) {
-	var baseInfo dto.OsInfo
+func (s *SystemService) LoadMachineInfo() (*dto.MachineInfo, error) {
+	var machineInfo dto.MachineInfo
 	hostInfo, err := host.Info()
 	if err != nil {
 		return nil, err
 	}
-	baseInfo.OS = hostInfo.OS
-	baseInfo.Platform = hostInfo.Platform
-	baseInfo.PlatformFamily = hostInfo.PlatformFamily
-	baseInfo.KernelArch = hostInfo.KernelArch
-	baseInfo.KernelVersion = hostInfo.KernelVersion
+	machineInfo.Hostname = hostInfo.Hostname
+	machineInfo.OS = hostInfo.OS
+	machineInfo.Platform = hostInfo.Platform
+	machineInfo.PlatformFamily = hostInfo.PlatformFamily
+	machineInfo.PlatformVersion = hostInfo.PlatformVersion
+	machineInfo.KernelArch = hostInfo.KernelArch
+	machineInfo.KernelVersion = hostInfo.KernelVersion
+	machineInfo.IpV4Addr = GetOutboundIP()
+	machineInfo.OSInfo = GetOSInfoIP()
+
+	cpuInfo, err := cpu.Info()
+	if err == nil {
+		machineInfo.CPUModelName = cpuInfo[0].ModelName
+	}
+
+	machineInfo.CPUCores, _ = cpu.Counts(false)
+	machineInfo.CPULogicalCores, _ = cpu.Counts(true)
 
 	diskInfo, err := disk.Usage(global.CONF.System.BaseDir)
 	if err == nil {
-		baseInfo.DiskSize = int64(diskInfo.Free)
+		machineInfo.DiskSize = int64(diskInfo.Free)
 	}
 
-	if baseInfo.KernelArch == "armv7l" {
-		baseInfo.KernelArch = "armv7"
+	if machineInfo.KernelArch == "armv7l" {
+		machineInfo.KernelArch = "armv7"
 	}
-	if baseInfo.KernelArch == "x86_64" {
-		baseInfo.KernelArch = "amd64"
+	if machineInfo.KernelArch == "x86_64" {
+		machineInfo.KernelArch = "amd64"
 	}
-	return &baseInfo, nil
+	return &machineInfo, nil
 }
 
 func (u *SystemService) LoadBaseInfo(ioOption string, netOption string) (*dto.SystemBaseInfo, error) {
@@ -128,6 +143,8 @@ func (u *SystemService) LoadCurrentInfo(ioOption string, netOption string) *dto.
 		currentInfo.CPUUsedPercent = totalPercent[0]
 		currentInfo.CPUUsed = currentInfo.CPUUsedPercent * 0.01 * float64(currentInfo.CPUTotal)
 	}
+
+	// 返回实时的所有 CPU 的使用率
 	currentInfo.CPUPercent, _ = cpu.Percent(0, true)
 
 	loadInfo, _ := load.Avg()
@@ -148,7 +165,9 @@ func (u *SystemService) LoadCurrentInfo(ioOption string, netOption string) *dto.
 	currentInfo.SwapMemoryUsed = swapInfo.Used
 	currentInfo.SwapMemoryUsedPercent = swapInfo.UsedPercent
 
-	currentInfo.DiskData = loadDiskInfo()
+	if hostInfo.OS != "darwin" {
+		currentInfo.DiskData = loadDiskInfo()
+	}
 	//currentInfo.GPUData = loadGPUInfo()
 
 	if ioOption == "all" {
@@ -281,6 +300,35 @@ func loadDiskInfo() []dto.DiskInfo {
 		return datas[i].Path < datas[j].Path
 	})
 	return datas
+}
+
+func GetOutboundIP() string {
+	conn, err := network.Dial("udp", "8.8.8.8:80")
+
+	if err != nil {
+		return "IPNotFound"
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*network.UDPAddr)
+	return localAddr.IP.String()
+}
+
+func GetOSInfoIP() string {
+	files := []string{"centos-release", "kylin-release", "redhat-release"}
+	for _, file := range files {
+		_, err := os.Stat("/etc/" + file)
+		if os.IsNotExist(err) {
+			continue
+		}
+		out, _ := cmd.ExecCmd("cat /etc/" + file)
+		return utils.FilterSpecialChar(out)
+	}
+	if cmd.Exists("lsb_release") {
+		out, _ := cmd.ExecCmd("lsb_release -r")
+		return utils.FilterSpecialChar(out)
+	}
+	return ""
 }
 
 //func loadGPUInfo() []dto.GPUInfo {

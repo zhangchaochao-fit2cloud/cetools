@@ -2,12 +2,21 @@ package dto
 
 import "time"
 
-type OsInfo struct {
-	OS             string `json:"os"`
-	Platform       string `json:"platform"`
-	PlatformFamily string `json:"platformFamily"`
-	KernelArch     string `json:"kernelArch"`
-	KernelVersion  string `json:"kernelVersion"`
+type MachineInfo struct {
+	Hostname             string `json:"hostname"`
+	OS                   string `json:"os"`
+	OSInfo               string `json:"osInfo"`
+	Platform             string `json:"platform"`
+	PlatformFamily       string `json:"platformFamily"`
+	PlatformVersion      string `json:"platformVersion"`
+	KernelArch           string `json:"kernelArch"`
+	KernelVersion        string `json:"kernelVersion"`
+	VirtualizationSystem string `json:"virtualizationSystem"`
+	IpV4Addr             string `json:"ipv4Addr"`
+	SystemProxy          string `json:"SystemProxy"`
+	CPUCores             int    `json:"cpuCores"`
+	CPULogicalCores      int    `json:"cpuLogicalCores"`
+	CPUModelName         string `json:"cpuModelName"`
 
 	DiskSize int64 `json:"diskSize"`
 }

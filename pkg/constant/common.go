@@ -12,7 +12,16 @@ var (
 )
 
 var (
-	Red   = "\033[31m"
-	Green = "\033[32m"
-	Reset = "\033[0m"
+	Red    = "\033[31m"
+	Green  = "\033[32m"
+	Yellow = "\033[33m"
+	Reset  = "\033[0m"
+)
+
+var (
+	KB = 1024
+	MB = KB * KB
+	GB = MB * KB
+	TB = GB * KB
+	PB = TB * KB
 )

@@ -114,13 +114,19 @@ func ExecWithCheck(name string, a ...string) (string, error) {
 //	return stdout.String(), nil
 //}
 
-func ExecCmd(cmdStr string) error {
+func ExecCmd(cmdStr string) ([]byte, error) {
 	cmd := exec.Command("bash", "-c", cmdStr)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("error : %v, output: %s", err, output)
+		return nil, fmt.Errorf("error : %v, output: %s", err, output)
 	}
-	return nil
+	return output, nil
+}
+
+func Exists(command string) bool {
+	cmd := exec.Command("which", command)
+	err := cmd.Run()
+	return err == nil
 }
 
 func ExecCmdWithDir(cmdStr, workDir string) error {
