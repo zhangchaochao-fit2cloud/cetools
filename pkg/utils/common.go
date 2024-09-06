@@ -28,13 +28,13 @@ func Space(sizeKB uint64) string {
 func SpaceFloat(sizeKB float64) string {
 	switch {
 	case sizeKB >= float64(constant.PB):
-		return fmt.Sprintf("%.1fP", sizeKB/float64(constant.PB))
+		return fmt.Sprintf("%.2fP", sizeKB/float64(constant.PB))
 	case sizeKB >= float64(constant.TB):
-		return fmt.Sprintf("%.1fT", sizeKB/float64(constant.TB))
+		return fmt.Sprintf("%.2fT", sizeKB/float64(constant.TB))
 	case sizeKB >= float64(constant.GB):
-		return fmt.Sprintf("%.1fG", sizeKB/float64(constant.GB))
+		return fmt.Sprintf("%.2fG", sizeKB/float64(constant.GB))
 	case sizeKB >= float64(constant.MB):
-		return fmt.Sprintf("%.1fM", sizeKB/float64(constant.MB))
+		return fmt.Sprintf("%.2fM", sizeKB/float64(constant.MB))
 	default:
 		return fmt.Sprintf("%fK", sizeKB)
 	}
@@ -66,6 +66,13 @@ func CalculatePercent(total float64, used float64) string {
 	return Percent((used / total) * 100)
 }
 
+func Calculate(total float64, used float64, num float64) string {
+	if total == 0 {
+		return Percent(0)
+	}
+	return Percent((used / total) * num)
+}
+
 func FilterSpecialChar(out []byte) string {
 	return FilterStrSpecialChar(string(out))
 }
@@ -94,19 +101,40 @@ func GetContainerStats(statMap map[string]interface{}) (string, string, string) 
 	cpuStatInfo := statMap["cpu_stats"].(map[string]interface{})
 	preCpuStats := statMap["precpu_stats"].(map[string]interface{})
 	preTotalUsage := preCpuStats["cpu_usage"].(map[string]interface{})["total_usage"].(float64)
-	preSystemCpuUsage := preCpuStats["system_cpu_usage"].(float64)
 
-	systemCpu := cpuStatInfo["system_cpu_usage"].(float64)
+	//preSystemCpuUsage := preCpuStats["system_cpu_usage"].(float64)
+	preSystemCpuUsage := float64(0)
+	if preCpuStats["system_cpu_usage"] != nil {
+		preSystemCpuUsage = preCpuStats["system_cpu_usage"].(float64)
+	}
+
+	//systemCpu := cpuStatInfo["system_cpu_usage"].(float64)
+	systemCpu := float64(0)
+	if cpuStatInfo["system_cpu_usage"] != nil {
+		systemCpu = cpuStatInfo["system_cpu_usage"].(float64)
+	}
+
 	cpuUsage := cpuStatInfo["cpu_usage"].(map[string]interface{})
 	totalUsage := cpuUsage["total_usage"].(float64)
 
-	memLimit := SpaceFloat(memStatInfo["limit"].(float64))
-	memUsed := SpaceFloat(memStatInfo["usage"].(float64))
+	//memLimit := SpaceFloat(memStatInfo["limit"].(float64))
+	var memLimit string
+	if memStatInfo["limit"] != nil {
+		memLimit = SpaceFloat(memStatInfo["limit"].(float64))
+	}
+
+	//memUsed := SpaceFloat(memStatInfo["usage"].(float64))
+	var memUsed string
+	if memStatInfo["usage"] != nil {
+		memUsed = SpaceFloat(memStatInfo["usage"].(float64))
+	}
 
 	cpuDelta := totalUsage - preTotalUsage
 	systemCpuDelta := systemCpu - preSystemCpuUsage
 	numberOfCores := cpuStatInfo["online_cpus"].(float64)
-	cpuPercent := Percent((cpuDelta / systemCpuDelta) * numberOfCores * 100)
-
+	var cpuPercent = ""
+	if systemCpuDelta >= 0 {
+		cpuPercent = Percent((cpuDelta / systemCpuDelta) * numberOfCores * 100)
+	}
 	return memUsed, memLimit, cpuPercent
 }
