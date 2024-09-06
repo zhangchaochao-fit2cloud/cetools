@@ -4,9 +4,11 @@ import (
 	"github.com/fsnotify/fsnotify"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"inspect/pkg/configs"
 	"inspect/pkg/global"
+	"os"
+	"path"
 )
 
 type errorOnWarningHook struct{}
@@ -50,20 +52,74 @@ var RootCmd = &cobra.Command{
 		}
 
 		v := viper.New()
-		v.SetConfigType("yaml")
-		_ = v.BindEnv("file", "CONFIG_FILE")
-		cmd.Flags().VisitAll(func(f *pflag.Flag) {
-			configName := f.Name
-			if configName == "file" && !f.Changed && v.IsSet(configName) {
-				GlobalFiles = v.GetStringSlice(configName)
-				v.OnConfigChange(func(e fsnotify.Event) {
-					if err := v.Unmarshal(&global.CONF); err != nil {
-						panic(err)
-					}
-				})
+		v.SetConfigType("yml")
+		v.SetConfigName("app")
+		for _, file := range GlobalFiles {
+			v.AddConfigPath(path.Join(file))
+		}
 
+		if _, err := os.Stat(v.ConfigFileUsed()); err != nil {
+			if os.IsNotExist(err) {
+				//fmt.Println("配置文件不存在，跳过加载和解析")
+				return
+			}
+		}
+
+		v.OnConfigChange(func(e fsnotify.Event) {
+			if err := v.Unmarshal(&global.CONF); err != nil {
+				panic(err)
 			}
 		})
+		if err := v.ReadInConfig(); err != nil {
+			panic(err)
+		}
+		serverConfig := configs.ServerConfig{}
+		if err := v.Unmarshal(&serverConfig); err != nil {
+			panic(err)
+		}
+		global.CONF = &serverConfig
+		//cmd.Flags().VisitAll(func(f *pflag.Flag) {
+		//	configName := f.Name
+		//	if configName == "file" && !f.Changed && v.IsSet(configName) {
+		//		GlobalFiles = v.GetStringSlice(configName)
+		//		v.OnConfigChange(func(e fsnotify.Event) {
+		//			if err := v.Unmarshal(&global.CONF); err != nil {
+		//				panic(err)
+		//			}
+		//		})
+		//
+		//		//v.OnConfigChange(func(e fsnotify.Event) {
+		//		//	if err := v.Unmarshal(&global.CONF); err != nil {
+		//		//		panic(err)
+		//		//	}
+		//		//})
+		//		serverConfig := configs.ServerConfig{}
+		//		if err := v.Unmarshal(&serverConfig); err != nil {
+		//			panic(err)
+		//		}
+		//		if fileOp.Stat("~/.cetools/config.yaml") {
+		//			//if serverConfig.System.BaseDir != "" {
+		//			//	baseDir = serverConfig.System.BaseDir
+		//			//}
+		//			//if serverConfig.System.Port != "" {
+		//			//	port = serverConfig.System.Port
+		//			//}
+		//			//if serverConfig.System.Version != "" {
+		//			//	version = serverConfig.System.Version
+		//			//}
+		//			//if serverConfig.System.Username != "" {
+		//			//	username = serverConfig.System.Username
+		//			//}
+		//			//if serverConfig.System.Password != "" {
+		//			//	password = serverConfig.System.Password
+		//			//}
+		//			//if serverConfig.System.Entrance != "" {
+		//			//	entrance = serverConfig.System.Entrance
+		//			//}
+		//		}
+		//
+		//	}
+		//})
 	},
 }
 
@@ -77,4 +133,5 @@ func init() {
 	RootCmd.PersistentFlags().BoolVarP(&GlobalVerbose, "verbose", "v", false, "verbose output")
 	RootCmd.PersistentFlags().BoolVar(&GlobalSuppressWarnings, "suppress-warnings", false, "Suppress all warnings")
 	RootCmd.PersistentFlags().BoolVar(&GlobalErrorOnWarning, "error-on-warning", false, "Treat any warning as an error")
+	RootCmd.PersistentFlags().StringSliceVarP(&GlobalFiles, "file", "f", []string{}, "config file")
 }

@@ -63,10 +63,10 @@ func (s *SystemService) LoadMachineInfo() (*dto.MachineInfo, error) {
 	machineInfo.CPUCores, _ = cpu.Counts(false)
 	machineInfo.CPULogicalCores, _ = cpu.Counts(true)
 
-	diskInfo, err := disk.Usage(global.CONF.System.BaseDir)
-	if err == nil {
-		machineInfo.DiskSize = int64(diskInfo.Free)
-	}
+	//diskInfo, err := disk.Usage(global.CONF.System.BaseDir)
+	//if err == nil {
+	//	machineInfo.DiskSize = int64(diskInfo.Free)
+	//}
 
 	if machineInfo.KernelArch == "armv7l" {
 		machineInfo.KernelArch = "armv7"
@@ -167,46 +167,46 @@ func (u *SystemService) LoadCurrentInfo(ioOption string, netOption string) *dto.
 
 	if hostInfo.OS != "darwin" {
 		currentInfo.DiskData = loadDiskInfo()
+		if ioOption == "all" {
+			diskInfo, _ := disk.IOCounters()
+			for _, state := range diskInfo {
+				currentInfo.IOReadBytes += state.ReadBytes
+				currentInfo.IOWriteBytes += state.WriteBytes
+				currentInfo.IOCount += (state.ReadCount + state.WriteCount)
+				currentInfo.IOReadTime += state.ReadTime
+				currentInfo.IOWriteTime += state.WriteTime
+			}
+		} else {
+			diskInfo, _ := disk.IOCounters(ioOption)
+			for _, state := range diskInfo {
+				currentInfo.IOReadBytes += state.ReadBytes
+				currentInfo.IOWriteBytes += state.WriteBytes
+				currentInfo.IOCount += (state.ReadCount + state.WriteCount)
+				currentInfo.IOReadTime += state.ReadTime
+				currentInfo.IOWriteTime += state.WriteTime
+			}
+		}
+
+		if netOption == "all" {
+			netInfo, _ := net.IOCounters(false)
+			if len(netInfo) != 0 {
+				currentInfo.NetBytesSent = netInfo[0].BytesSent
+				currentInfo.NetBytesRecv = netInfo[0].BytesRecv
+			}
+		} else {
+			netInfo, _ := net.IOCounters(true)
+			for _, state := range netInfo {
+				if state.Name == netOption {
+					currentInfo.NetBytesSent = state.BytesSent
+					currentInfo.NetBytesRecv = state.BytesRecv
+				}
+			}
+		}
+
+		currentInfo.ShotTime = time.Now()
 	}
 	//currentInfo.GPUData = loadGPUInfo()
 
-	if ioOption == "all" {
-		diskInfo, _ := disk.IOCounters()
-		for _, state := range diskInfo {
-			currentInfo.IOReadBytes += state.ReadBytes
-			currentInfo.IOWriteBytes += state.WriteBytes
-			currentInfo.IOCount += (state.ReadCount + state.WriteCount)
-			currentInfo.IOReadTime += state.ReadTime
-			currentInfo.IOWriteTime += state.WriteTime
-		}
-	} else {
-		diskInfo, _ := disk.IOCounters(ioOption)
-		for _, state := range diskInfo {
-			currentInfo.IOReadBytes += state.ReadBytes
-			currentInfo.IOWriteBytes += state.WriteBytes
-			currentInfo.IOCount += (state.ReadCount + state.WriteCount)
-			currentInfo.IOReadTime += state.ReadTime
-			currentInfo.IOWriteTime += state.WriteTime
-		}
-	}
-
-	if netOption == "all" {
-		netInfo, _ := net.IOCounters(false)
-		if len(netInfo) != 0 {
-			currentInfo.NetBytesSent = netInfo[0].BytesSent
-			currentInfo.NetBytesRecv = netInfo[0].BytesRecv
-		}
-	} else {
-		netInfo, _ := net.IOCounters(true)
-		for _, state := range netInfo {
-			if state.Name == netOption {
-				currentInfo.NetBytesSent = state.BytesSent
-				currentInfo.NetBytesRecv = state.BytesRecv
-			}
-		}
-	}
-
-	currentInfo.ShotTime = time.Now()
 	return &currentInfo
 }
 

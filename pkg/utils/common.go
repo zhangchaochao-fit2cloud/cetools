@@ -1,9 +1,12 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/docker/docker/api/types/container"
 	"inspect/pkg/constant"
 	"inspect/pkg/global"
+	"io/ioutil"
 	"strings"
 )
 
@@ -19,6 +22,21 @@ func Space(sizeKB uint64) string {
 		return fmt.Sprintf("%.1fM", float64(sizeKB)/float64(constant.MB))
 	default:
 		return fmt.Sprintf("%dK", sizeKB)
+	}
+}
+
+func SpaceFloat(sizeKB float64) string {
+	switch {
+	case sizeKB >= float64(constant.PB):
+		return fmt.Sprintf("%.1fP", sizeKB/float64(constant.PB))
+	case sizeKB >= float64(constant.TB):
+		return fmt.Sprintf("%.1fT", sizeKB/float64(constant.TB))
+	case sizeKB >= float64(constant.GB):
+		return fmt.Sprintf("%.1fG", sizeKB/float64(constant.GB))
+	case sizeKB >= float64(constant.MB):
+		return fmt.Sprintf("%.1fM", sizeKB/float64(constant.MB))
+	default:
+		return fmt.Sprintf("%fK", sizeKB)
 	}
 }
 
@@ -56,4 +74,17 @@ func FilterStrSpecialChar(out string) string {
 	fileContent := strings.ReplaceAll(out, "\r", "")
 	fileContent = strings.ReplaceAll(fileContent, "\n", "")
 	return fileContent
+}
+
+func Stat(stats container.StatsResponseReader) map[string]interface{} {
+	data, err := ioutil.ReadAll(stats.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	var statsData map[string]interface{}
+	if err := json.Unmarshal(data, &statsData); err != nil {
+		panic(err)
+	}
+	return statsData
 }

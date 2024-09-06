@@ -1,6 +1,7 @@
 package configs
 
 type ServerConfig struct {
-	System System
-	//LogConfig LogConfig `mapstructure:"log"`
+	System System `mapstructure:"system"`
+	Nodes  []Node `mapstructure:"nodes"`
+	Docker Docker `mapstructure:"docker"`
 }

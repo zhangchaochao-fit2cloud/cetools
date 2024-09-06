@@ -2,20 +2,52 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"inspect/pkg/global"
 	"inspect/pkg/service"
 	u "inspect/pkg/utils"
-	"os"
+	"inspect/pkg/utils/cmp"
+	"inspect/pkg/utils/table"
+)
+
+var (
+	GlobalService bool
 )
 
 var inspect = &cobra.Command{
 	Use:   "inspect",
 	Short: "CloudExplorer 巡检",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ss := service.NewISystemService()
+		err := GenerateLocalInfo()
+		if err != nil {
+			return err
+		}
+		err = GenerateNodeInfo()
+		if err != nil {
+			return err
+		}
+		return nil
+	},
+}
 
+func GenerateNodeInfo() error {
+	if global.CONF == nil || len(global.CONF.Nodes) <= 0 {
+		return nil
+	}
+	for _, node := range global.CONF.Nodes {
+		global.Print.Info("******************************** %s ********************************", "节点"+node.Addr+"信息")
+
+	}
+
+	return nil
+}
+
+// GenerateLocalInfo 打印本地的信息
+func GenerateLocalInfo() error {
+	global.Print.Info("******************************** %s ********************************", "本机信息")
+	ss := service.NewISystemService()
+
+	if !GlobalService {
 		// 机器信息
 		err := GenerateMachineInfo(ss)
 		if err != nil {
@@ -24,11 +56,12 @@ var inspect = &cobra.Command{
 
 		// 操作系统信息
 		GenerateSystemInfo(ss)
+	}
 
-		return nil
-	},
+	// 服务信息
+	err := GenerateServiceInfo()
+	return err
 }
-
 func GenerateMachineInfo(ss service.ISystemService) error {
 	info, err := ss.LoadMachineInfo()
 	if err != nil {
@@ -50,9 +83,22 @@ func GenerateMachineInfo(ss service.ISystemService) error {
 	return nil
 }
 
-func GenerateServiceInfo(ss service.ISystemService) {
+func GenerateServiceInfo() error {
+	services, err := cmp.GetCmpServices()
+	global.Print.Info("**************** %s ****************", "服务信息")
+	if err != nil {
+		return err
+	}
+	var data [][]string
+	for _, ser := range services {
+		item := []string{ser.Name, ser.Status, ser.Ports, ser.CPUPercent, ser.MemUsed, ser.MemLimit, ser.Runtime}
+		data = append(data, item)
+	}
 
+	table.Print([]string{"服务名", "状态", "开放端口", "CPU 使用", "内存使用", "内存限制", "运行时间"}, data)
+	return nil
 }
+
 func GenerateSystemInfo(ss service.ISystemService) {
 	ssInfo := ss.LoadCurrentInfo("all", "all")
 	global.Print.Info("**************** %s ****************", "系统状态")
@@ -66,25 +112,25 @@ func GenerateSystemInfo(ss service.ISystemService) {
 		diskUsed += disk.Used
 	}
 	data := [][]string{
-		{"CPU", u.FormatFloat(float64(ssInfo.CPUTotal)), u.FormatFloat(ssInfo.CPUUsed), u.Percent(ssInfo.CPUUsedPercent)},
-		{"内存", u.Space(ssInfo.MemoryTotal), u.Space(ssInfo.MemoryUsed), u.Percent(ssInfo.MemoryUsedPercent)},
+		{"CPU", u.FormatFloat(float64(ssInfo.CPUTotal)), u.FormatFloat(float64(ssInfo.CPUTotal) - ssInfo.CPUUsed), u.Percent(ssInfo.CPUUsedPercent)},
+		{"内存", u.Space(ssInfo.MemoryTotal), u.Space(ssInfo.MemoryTotal - ssInfo.MemoryUsed), u.Percent(ssInfo.MemoryUsedPercent)},
 		{"交换内存", u.Space(ssInfo.SwapMemoryTotal), u.Space(ssInfo.SwapMemoryAvailable), u.Percent(ssInfo.SwapMemoryUsedPercent)},
-		{"磁盘", u.Space(diskTotal), u.Space(diskUsed), u.CalculatePercent(float64(diskTotal), float64(diskUsed))},
+		//{"磁盘", u.Space(diskTotal), u.Space(diskUsed), u.CalculatePercent(float64(diskTotal), float64(diskUsed))},
 	}
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetAutoFormatHeaders(false)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetBorder(false)
-	table.SetHeader([]string{"资源", "总量", "使用", "使用率"})
+	table.Print([]string{"资源", "总量", "剩余", "使用率"}, data)
 
-	for _, v := range data {
-		table.Append(v)
+	if len(ssInfo.DiskData) > 0 {
+		global.Print.Info("**************** %s ****************", "磁盘状态")
+		var spaceData [][]string
+		for _, disk := range ssInfo.DiskData {
+			item := []string{disk.Path, u.Space(disk.Total), u.Space(disk.Free), u.Percent(disk.UsedPercent)}
+			spaceData = append(spaceData, item)
+		}
+		table.Print([]string{"挂载点", "总量", "剩余", "使用率"}, spaceData)
 	}
-
-	table.Render()
 }
 
 func init() {
+	RootCmd.PersistentFlags().BoolVarP(&GlobalService, "service", "s", false, "Service Status output")
 	RootCmd.AddCommand(inspect)
 }

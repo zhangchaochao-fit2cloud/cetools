@@ -1,6 +1,12 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+)
+
+var (
+	GlobalConfigFiles []string
+)
 
 var ha = &cobra.Command{
 	Use:   "ha",
@@ -11,5 +17,7 @@ var ha = &cobra.Command{
 }
 
 func init() {
+
+	//RootCmd.PersistentFlags().BoolVar(&GlobalErrorOnWarning, "error-on-warning", false, "Treat any warning as an error")
 	RootCmd.AddCommand(ha)
 }

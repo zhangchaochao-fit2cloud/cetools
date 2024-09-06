@@ -1,5 +1,6 @@
 package service
 
 var (
-	system = NewISystemService()
+	system     = NewISystemService()
+	sshService = NewISSHService()
 )

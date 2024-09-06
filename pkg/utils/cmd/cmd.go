@@ -123,6 +123,15 @@ func ExecCmd(cmdStr string) ([]byte, error) {
 	return output, nil
 }
 
+func ExecCmdError(cmdStr string) error {
+	cmd := exec.Command("bash", "-c", cmdStr)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("error : %v, output: %s", err, output)
+	}
+	return nil
+}
+
 func Exists(command string) bool {
 	cmd := exec.Command("which", command)
 	err := cmd.Run()

@@ -114,3 +114,15 @@ type GPUInfo struct {
 	MemTotal         string `json:"memTotal"`
 	FanSpeed         string `json:"fanSpeed"`
 }
+
+type ServiceInfo struct {
+	Name       string `json:"name"`
+	Status     string `json:"status"`
+	Ports      string `json:"ports"`
+	CPUPercent string `json:"cpu"`
+	MemUsed    string `json:"memUsed"`
+	MemLimit   string `json:"limit"`
+	NetIO      string `json:"netIO"`
+	BlockIO    string `json:"blockIO"`
+	Runtime    string `json:"runtime"`
+}

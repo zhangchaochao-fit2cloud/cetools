@@ -1,5 +1,7 @@
 package configs
 
+import "time"
+
 type System struct {
 	Port           string `mapstructure:"port"`
 	Ipv6           string `mapstructure:"ipv6"`
@@ -25,4 +27,19 @@ type System struct {
 	ChangeUserInfo string `mapstructure:"change_user_info"`
 	OneDriveID     string `mapstructure:"one_drive_id"`
 	OneDriveSc     string `mapstructure:"one_drive_sc"`
+}
+
+type Node struct {
+	User        string        `mapstructure:"user"`
+	Addr        string        `mapstructure:"addr"`
+	Port        int           `mapstructure:"port"`
+	AuthMode    string        `mapstructure:"authMode"`
+	Password    string        `mapstructure:"password"`
+	PrivateKey  []byte        `mapstructure:"privateKey"`
+	PassPhrase  []byte        `mapstructure:"passPhrase"`
+	DialTimeOut time.Duration `mapstructure:"dialTimeOut"`
+}
+
+type Docker struct {
+	Sock string `mapstructure:"sock"`
 }
