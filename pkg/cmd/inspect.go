@@ -11,10 +11,11 @@ import (
 )
 
 var (
-	GlobalService bool
+	GlobalService       bool
+	GlobalRemoteCommand bool
 )
 
-var inspect = &cobra.Command{
+var Inspect = &cobra.Command{
 	Use:   "inspect",
 	Short: "CloudExplorer 巡检",
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -22,9 +23,11 @@ var inspect = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		err = GenerateNodeInfo()
-		if err != nil {
-			return err
+		if !GlobalRemoteCommand {
+			err = GenerateNodeInfo()
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	},
@@ -34,9 +37,26 @@ func GenerateNodeInfo() error {
 	if global.CONF == nil || len(global.CONF.Nodes) <= 0 {
 		return nil
 	}
+	//executable, err := os.Executable()
+	//if err != nil {
+	//	return err
+	//}
+	//fmt.Println(executable)
 	for _, node := range global.CONF.Nodes {
-		global.Print.Info("******************************** %s ********************************", "节点"+node.Addr+"信息")
+		if len(node.Addr) <= 0 {
+			continue
+		}
+		global.Print.Info("**************** %s ****************", "节点 "+node.Addr+" 信息")
+		ss := service.NewISSHService()
 
+		command := "/tmp/chao/cetools inspect -r "
+		//cmdStr.WriteString("/tmp/chao/cetools inspect -r ")
+
+		run, err := ss.Run(node, command+GlobalCommand)
+		if err != nil {
+			return err
+		}
+		fmt.Println(run)
 	}
 
 	return nil
@@ -44,7 +64,9 @@ func GenerateNodeInfo() error {
 
 // GenerateLocalInfo 打印本地的信息
 func GenerateLocalInfo() error {
-	global.Print.Info("******************************** %s ********************************", "本机信息")
+	if !GlobalRemoteCommand {
+		global.Print.Info("**************** %s ****************", "本机信息")
+	}
 	ss := service.NewISystemService()
 
 	if !GlobalService {
@@ -67,7 +89,7 @@ func GenerateMachineInfo(ss service.ISystemService) error {
 	if err != nil {
 		return err
 	}
-	global.Print.Info("**************** %s ****************", "系统信息")
+	global.Print.Info("【 %s 】", "系统信息")
 	var osInfo string
 	if len(info.OSInfo) > 0 {
 		osInfo = info.OSInfo
@@ -85,7 +107,7 @@ func GenerateMachineInfo(ss service.ISystemService) error {
 
 func GenerateServiceInfo() error {
 	services, err := cmp.GetCmpServices()
-	global.Print.Info("**************** %s ****************", "服务信息")
+	global.Print.Info("【 %s 】", "服务信息")
 	if err != nil {
 		return err
 	}
@@ -101,7 +123,7 @@ func GenerateServiceInfo() error {
 
 func GenerateSystemInfo(ss service.ISystemService) {
 	ssInfo := ss.LoadCurrentInfo("all", "all")
-	global.Print.Info("**************** %s ****************", "系统状态")
+	global.Print.Info("【 %s 】", "系统状态")
 
 	fmt.Printf("  负载：1分钟：%s, 5分钟：%s, 15分钟：%s\n", u.Percent(ssInfo.Load1), u.Percent(ssInfo.Load5), u.Percent(ssInfo.Load15))
 
@@ -120,7 +142,7 @@ func GenerateSystemInfo(ss service.ISystemService) {
 	table.Print([]string{"资源", "总量", "剩余", "使用率"}, data)
 
 	if len(ssInfo.DiskData) > 0 {
-		global.Print.Info("**************** %s ****************", "磁盘状态")
+		global.Print.Info("【 %s 】", "磁盘状态")
 		var spaceData [][]string
 		for _, disk := range ssInfo.DiskData {
 			item := []string{disk.Path, u.Space(disk.Total), u.Space(disk.Free), u.Percent(disk.UsedPercent)}
@@ -131,6 +153,7 @@ func GenerateSystemInfo(ss service.ISystemService) {
 }
 
 func init() {
-	RootCmd.PersistentFlags().BoolVarP(&GlobalService, "service", "s", false, "Service Status output")
-	RootCmd.AddCommand(inspect)
+	Inspect.PersistentFlags().BoolVarP(&GlobalRemoteCommand, "remote", "r", false, "Remote Command")
+	Inspect.PersistentFlags().BoolVarP(&GlobalService, "service", "s", false, "Service Status output")
+	RootCmd.AddCommand(Inspect)
 }

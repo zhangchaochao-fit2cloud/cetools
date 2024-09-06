@@ -1,14 +1,17 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/fsnotify/fsnotify"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"inspect/pkg/configs"
 	"inspect/pkg/global"
 	"os"
 	"path"
+	"strings"
 )
 
 type errorOnWarningHook struct{}
@@ -27,6 +30,7 @@ var (
 	GlobalSuppressWarnings bool
 	GlobalErrorOnWarning   bool
 	GlobalFiles            []string
+	GlobalCommand          string
 )
 var RootCmd = &cobra.Command{
 	Use:           "cetools",
@@ -78,7 +82,11 @@ var RootCmd = &cobra.Command{
 			panic(err)
 		}
 		global.CONF = &serverConfig
+
+		saveCommand(cmd)
 		//cmd.Flags().VisitAll(func(f *pflag.Flag) {
+		//
+		//})
 		//	configName := f.Name
 		//	if configName == "file" && !f.Changed && v.IsSet(configName) {
 		//		GlobalFiles = v.GetStringSlice(configName)
@@ -121,6 +129,36 @@ var RootCmd = &cobra.Command{
 		//	}
 		//})
 	},
+}
+
+func saveCommand(cmd *cobra.Command) {
+	var cmdStr strings.Builder
+	//cmdStr.WriteString("/tmp/chao/cetools inspect -r ")
+	//var (
+	//	wg sync.WaitGroup
+	//)
+	//wg.Add(len(cmd.Flags().Args()))
+	cmd.Flags().VisitAll(func(f *pflag.Flag) {
+		flagPrefix := "-"
+		if len(f.Name) > 1 {
+			flagPrefix = "--"
+		}
+		if f.Name == "remote" || f.Name == "r" || f.Name == "file" {
+			return
+		}
+		value := f.Value.String()
+		if f.Value.Type() == "bool" {
+			if f.Value.String() == "false" {
+				return
+			}
+			value = ""
+			return
+		}
+		cmdStr.WriteString(fmt.Sprintf(" %s%s %v", flagPrefix, f.Name, value))
+		//wg.Done()
+	})
+	//wg.Wait()
+	GlobalCommand = cmdStr.String()
 }
 
 // Execute executes the root level command.

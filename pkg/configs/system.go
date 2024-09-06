@@ -30,6 +30,7 @@ type System struct {
 }
 
 type Node struct {
+	Type        string        `mapstructure:"type"`
 	User        string        `mapstructure:"user"`
 	Addr        string        `mapstructure:"addr"`
 	Port        int           `mapstructure:"port"`
