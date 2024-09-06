@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"fmt"
+	"github.com/docker/docker/api/types/network"
 	"inspect/pkg/dto"
 	"inspect/pkg/global"
 	"inspect/pkg/utils"
@@ -14,9 +15,6 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
-
-	//"github.com/1Panel-dev/1Panel/backend/app/model"
-	//"github.com/1Panel-dev/1Panel/backend/global"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -121,20 +119,7 @@ func (c Client) ListContainersStats(names []string) ([]*dto.ServiceInfo, error) 
 
 				defer stats.Body.Close()
 				statMap := utils.Stat(stats)
-
-				memStatInfo := statMap["memory_stats"].(map[string]interface{})
-				cpuStatInfo := statMap["cpu_stats"].(map[string]interface{})
-				systemCpu := cpuStatInfo["system_cpu_usage"].(float64)
-				cpuUsage := cpuStatInfo["cpu_usage"].(map[string]interface{})
-				//totalUsage := cpuUsage["total_usage"].(float64)
-				usageInKernelmode := cpuUsage["usage_in_kernelmode"].(float64)
-				usageInUsermode := cpuUsage["usage_in_usermode"].(float64)
-
-				memLimit := utils.SpaceFloat(memStatInfo["limit"].(float64))
-				memUsed := utils.SpaceFloat(memStatInfo["usage"].(float64))
-
-				cpuPercent := utils.CalculatePercent(systemCpu, usageInKernelmode+usageInUsermode)
-
+				memUsed, memLimit, cpuPercent := utils.GetContainerStats(statMap)
 				serviceInfo.CPUPercent = cpuPercent
 				serviceInfo.MemUsed = memUsed
 				serviceInfo.MemLimit = memLimit
@@ -145,59 +130,6 @@ func (c Client) ListContainersStats(names []string) ([]*dto.ServiceInfo, error) 
 		}(time.After(5*time.Second), containers[i])
 	}
 	wg.Wait()
-	//for _, con := range containers {
-	//
-	//	stats, err := c.cli.ContainerStats(context.Background(), con.ID, false)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	defer stats.Body.Close()
-	//
-	//	var nameStr string
-	//	for i, name := range con.Names {
-	//		name = strings.ReplaceAll(name, "/", "")
-	//		nameStr += name
-	//		if len(con.Names)-1 != i {
-	//			nameStr += ","
-	//		}
-	//	}
-	//	statMap := utils.Stat(stats)
-	//
-	//	var portStr string
-	//	for i, p := range con.Ports {
-	//		if p.PublicPort == 0 {
-	//			continue
-	//		}
-	//		portStr += strconv.Itoa(int(p.PublicPort))
-	//		if len(con.Ports)-1 != i {
-	//			portStr += ","
-	//		}
-	//	}
-	//
-	//	memStatInfo := statMap["memory_stats"].(map[string]interface{})
-	//	cpuStatInfo := statMap["cpu_stats"].(map[string]interface{})
-	//	systemCpu := cpuStatInfo["system_cpu_usage"].(float64)
-	//	cpuUsage := cpuStatInfo["cpu_usage"].(map[string]interface{})
-	//	//totalUsage := cpuUsage["total_usage"].(float64)
-	//	usageInKernelmode := cpuUsage["usage_in_kernelmode"].(float64)
-	//	usageInUsermode := cpuUsage["usage_in_usermode"].(float64)
-	//
-	//	memLimit := utils.SpaceFloat(memStatInfo["limit"].(float64))
-	//	memUsed := utils.SpaceFloat(memStatInfo["usage"].(float64))
-	//
-	//	cpuPercent := utils.CalculatePercent(systemCpu, usageInKernelmode+usageInUsermode)
-	//
-	//	serviceInfo := &dto.ServiceInfo{
-	//		Name:       nameStr,
-	//		Status:     con.State,
-	//		Ports:      portStr,
-	//		CPUPercent: cpuPercent,
-	//		MemUsed:    memUsed,
-	//		MemLimit:   memLimit,
-	//		Runtime:    con.Status,
-	//	}
-	//	services = append(services, serviceInfo)
-	//}
 	return services, nil
 }
 
@@ -276,7 +208,7 @@ func (c Client) ListAllContainers() ([]types.Container, error) {
 }
 
 func (c Client) CreateNetwork(name string) error {
-	_, err := c.cli.NetworkCreate(context.Background(), name, types.NetworkCreate{
+	_, err := c.cli.NetworkCreate(context.Background(), name, network.CreateOptions{
 		Driver: "bridge",
 	})
 	return err
@@ -337,7 +269,7 @@ func (c Client) CheckImageExist(imageName string) (bool, error) {
 }
 
 func (c Client) NetworkExist(name string) bool {
-	var options types.NetworkListOptions
+	var options network.ListOptions
 	options.Filters = filters.NewArgs(filters.Arg("name", name))
 	networks, err := c.cli.NetworkList(context.Background(), options)
 	if err != nil {
