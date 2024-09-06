@@ -50,14 +50,17 @@ var RootCmd = &cobra.Command{
 			hook := errorOnWarningHook{}
 			log.AddHook(hook)
 		}
-
 		v := viper.New()
-		v.SetConfigType("yml")
+		//v.SetConfigType("yml")
 		v.SetConfigName("app")
+
 		for _, file := range GlobalFiles {
 			v.AddConfigPath(path.Join(file))
 		}
 
+		if err := v.ReadInConfig(); err != nil {
+			//panic(err)
+		}
 		if _, err := os.Stat(v.ConfigFileUsed()); err != nil {
 			if os.IsNotExist(err) {
 				//fmt.Println("配置文件不存在，跳过加载和解析")
@@ -70,9 +73,6 @@ var RootCmd = &cobra.Command{
 				panic(err)
 			}
 		})
-		if err := v.ReadInConfig(); err != nil {
-			panic(err)
-		}
 		serverConfig := configs.ServerConfig{}
 		if err := v.Unmarshal(&serverConfig); err != nil {
 			panic(err)
