@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"inspect/pkg/configs"
 	"inspect/pkg/utils/ssh"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 const sshPath = "/etc/ssh/sshd_config"
@@ -15,6 +18,7 @@ type ISSHService interface {
 	Download(node configs.Node, filePath string, remotePath string) error
 	Upload(node configs.Node, localPath string, remotePath string, permission string) error
 	Run(node configs.Node, shell string) (string, error)
+	UploadTools(node configs.Node) (string, error)
 }
 
 func NewISSHService() ISSHService {
@@ -55,4 +59,37 @@ func (s *SSHService) Run(node configs.Node, shell string) (string, error) {
 
 	result, err := con.Run(shell)
 	return result, err
+}
+
+func (s *SSHService) UploadTools(node configs.Node) (string, error) {
+	executable, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	fmt.Println(executable)
+
+	//con := ssh.Build(node)
+	run, err := s.Run(node, "ls -l "+executable)
+	if err != nil && run == "" {
+		return "", err
+	}
+
+	if strings.Contains(run, executable) && err == nil {
+		return executable, nil
+	}
+
+	processName := filepath.Base(executable)
+	run, err = s.Run(node, "which "+processName)
+	if err != nil && run == "" {
+		return "", err
+	}
+	if !strings.Contains(run, "no "+processName) && err == nil {
+		return processName, nil
+	}
+	err = s.Upload(node, executable, executable, "0777")
+	if err != nil {
+		return "", err
+	}
+
+	return executable, nil
 }

@@ -4,7 +4,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"inspect/pkg/configs"
+	"inspect/pkg/dto"
 	"inspect/pkg/utils/logger"
+)
+
+var (
+	Conf dto.GlobalConf
 )
 
 var (

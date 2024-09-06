@@ -11,8 +11,10 @@ import (
 )
 
 var (
-	GlobalService       bool
+	//GlobalService       bool
+	GlobalShowInfo      string
 	GlobalRemoteCommand bool
+	GlobalUploadBin     bool
 )
 
 var Inspect = &cobra.Command{
@@ -37,11 +39,7 @@ func GenerateNodeInfo() error {
 	if global.CONF == nil || len(global.CONF.Nodes) <= 0 {
 		return nil
 	}
-	//executable, err := os.Executable()
-	//if err != nil {
-	//	return err
-	//}
-	//fmt.Println(executable)
+
 	for _, node := range global.CONF.Nodes {
 		if len(node.Addr) <= 0 {
 			continue
@@ -49,12 +47,20 @@ func GenerateNodeInfo() error {
 		global.Print.Info("**************** %s ****************", "节点 "+node.Addr+" 信息")
 		ss := service.NewISSHService()
 
-		command := "/tmp/chao/cetools inspect -r "
-		//cmdStr.WriteString("/tmp/chao/cetools inspect -r ")
+		command := "/tmp/chao/cetools inspect -n "
+		if GlobalUploadBin {
+			tools, err := ss.UploadTools(node)
+			if err != nil {
+				u.CheckError(tools, err)
+				return nil
+			}
+			command = tools + " inspect -n "
+		}
 
-		run, err := ss.Run(node, command+GlobalCommand)
+		run, err := ss.Run(node, command+global.Conf.Command)
 		if err != nil {
-			return err
+			u.CheckError(run, err)
+			return nil
 		}
 		fmt.Println(run)
 	}
@@ -69,7 +75,24 @@ func GenerateLocalInfo() error {
 	}
 	ss := service.NewISystemService()
 
-	if !GlobalService {
+	var (
+		machineInfo = false
+		serviceInfo = false
+	)
+	if len(GlobalShowInfo) <= 0 || GlobalShowInfo == "all" {
+		machineInfo = true
+		serviceInfo = true
+	}
+
+	if GlobalShowInfo == "service" {
+		serviceInfo = true
+	}
+
+	if GlobalShowInfo == "info" {
+		machineInfo = true
+	}
+
+	if machineInfo {
 		// 机器信息
 		err := GenerateMachineInfo(ss)
 		if err != nil {
@@ -80,9 +103,13 @@ func GenerateLocalInfo() error {
 		GenerateSystemInfo(ss)
 	}
 
-	// 服务信息
-	err := GenerateServiceInfo()
-	return err
+	if serviceInfo {
+		// 服务信息
+		err := GenerateServiceInfo()
+		return err
+	}
+
+	return nil
 }
 func GenerateMachineInfo(ss service.ISystemService) error {
 	info, err := ss.LoadMachineInfo()
@@ -153,7 +180,13 @@ func GenerateSystemInfo(ss service.ISystemService) {
 }
 
 func init() {
-	Inspect.PersistentFlags().BoolVarP(&GlobalRemoteCommand, "remote", "r", false, "Remote Command")
-	Inspect.PersistentFlags().BoolVarP(&GlobalService, "service", "s", false, "Service Status output")
+	Inspect.PersistentFlags().BoolVarP(&GlobalRemoteCommand, "is-node", "n", false, "is Remote Command ")
+	if f := Inspect.PersistentFlags().Lookup("is-node"); f != nil {
+		f.Hidden = true
+	}
+
+	Inspect.PersistentFlags().BoolVarP(&GlobalUploadBin, "upload-tool", "p", false, "自动上传工具到节点")
+	//Inspect.PersistentFlags().BoolVarP(&GlobalService, "service", "s", false, "输出服务状态")
+	Inspect.PersistentFlags().StringVarP(&GlobalShowInfo, "info", "i", "all", "查看巡检：all 全部，service 服务，info 主机信息")
 	RootCmd.AddCommand(Inspect)
 }
