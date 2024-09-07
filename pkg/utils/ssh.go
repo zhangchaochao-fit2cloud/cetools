@@ -12,6 +12,7 @@ func CheckError(detail string, err error) {
 	var netErr net.Error
 	if errors.As(err, &netErr) && netErr.Timeout() {
 		global.LOG.Warn("请检查网络连接：", err)
+		return
 	}
 	var exitError *ssh.ExitError
 	ok := errors.As(err, &exitError)
