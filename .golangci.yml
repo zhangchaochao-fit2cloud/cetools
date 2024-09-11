@@ -6,6 +6,8 @@ linters:
   disable:
     - errcheck
 linters-settings:
+  unused:
+    enabled: false
   revive:
     rules:
       - name: unused-parameter
