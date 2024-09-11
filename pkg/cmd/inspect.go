@@ -23,12 +23,15 @@ var Inspect = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := GenerateLocalInfo()
 		if err != nil {
-			return err
+			//panic(err)
+			global.Print.Error(err.Error())
+			return nil
 		}
 		if !GlobalRemoteCommand {
 			err = GenerateNodeInfo()
 			if err != nil {
-				return err
+				global.Print.Error(err.Error())
+				return nil
 			}
 		}
 		return nil

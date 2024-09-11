@@ -19,6 +19,7 @@ func (log *Logger) SFormat(prefix, format string, a ...any) string {
 		content = fmt.Sprintf(format, a...)
 		content = strings.ReplaceAll(content, "[", "")
 		content = strings.ReplaceAll(content, "]", "")
+		content = strings.ReplaceAll(content, "%!(EXTRA interface {}=)", "")
 	}
 	return fmt.Sprintf("%s%s%s\n", prefix, content, constant.Reset)
 }
@@ -72,6 +73,6 @@ func (log *Logger) SError(format string, a ...any) string {
 	return log.SFormat(constant.Red, format, a)
 }
 
-func NewLogger() *Logger {
-	return &Logger{}
-}
+//func NewLogger() *Logger {
+//	return &Logger{}
+//}

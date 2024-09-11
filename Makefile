@@ -1,37 +1,48 @@
-GOCMD=go
-GOBUILD=$(GOCMD) build
-GOCLEAN=$(GOCMD) clean
-GOARCH=$(shell go env GOARCH)
-GOOS=$(shell go env GOOS )
+PROGRAM     := ce-tool
+VERSION     := 0.1.0
+LDFLAGS     ?= "-s -w -X github.com/zhangchaochao-fit2cloud/cetools/pkg.cmd.version.Version=$(VERSION) -X github.com/zhangchaochao-fit2cloud/cetools/pkg.cmd.version.GitCommit=$(shell git rev-parse --short HEAD) -X 'github.com/zhangchaochao-fit2cloud/cetools/pkg.cmd.version.BuildTime=$(shell date '+%Y-%m-%d %H:%M:%S')'"
+GOBUILD_ENV = GO111MODULE=on CGO_ENABLED=0
+GOBUILD     = go build -o bin/$(PROGRAM) -a -ldflags $(LDFLAGS)
+GOX         = go run github.com/mitchellh/gox
+TARGETS     := darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64
+DIST_DIRS   := find * -maxdepth 0 -type d -exec
 
-BASE_PAH := $(shell pwd)
-BUILD_PATH = $(BASE_PAH)/build
-WEB_PATH=$(BASE_PAH)/frontend
-SERVER_PATH=$(BASE_PAH)/backend
-MAIN= $(BASE_PAH)/cmd/server/main.go
-APP_NAME=1panel
-ASSERT_PATH= $(BASE_PAH)/cmd/server/web/assets
+.PHONY: build linux cross-build release test lint down tidy clean
 
-clean_assets:
-	rm -rf $(ASSERT_PATH)
+all: build
 
-upx_bin:
-	upx $(BUILD_PATH)/$(APP_NAME)
-
-build_frontend:
-	cd $(WEB_PATH) && npm install && npm run build:pro
-
-build_backend_on_linux:
-	cd $(SERVER_PATH) \
-    && GOOS=$(GOOS) GOARCH=$(GOARCH) $(GOBUILD) -trimpath -ldflags '-s -w' -o $(BUILD_PATH)/$(APP_NAME) $(MAIN)
-
-build_backend_on_darwin:
-	cd $(SERVER_PATH) \
-    && GOOS=linux GOARCH=amd64 $(GOBUILD) -trimpath -ldflags '-s -w'  -o $(BUILD_PATH)/$(APP_NAME) $(MAIN)
+build:
+	$(GOBUILD_ENV) $(GOBUILD)
 
 linux:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ce-tool
+	GOOS=linux GOARCH=amd64 $(GOBUILD_ENV) $(GOBUILD)
 
-build_all: build_frontend build_backend_on_linux
+cross-build: clean
+	$(GOBUILD_ENV) $(GOX) -ldflags $(LDFLAGS) -parallel=5 -output="bin/$(PROGRAM)-$(VERSION)-{{.OS}}-{{.Arch}}/$(PROGRAM)" -osarch='$(TARGETS)' .
 
-build_on_local: clean_assets build_frontend build_backend_on_darwin upx_bin
+release: cross-build
+	( \
+		cd bin && \
+		$(DIST_DIRS) cp ../LICENSE {} \; && \
+		$(DIST_DIRS) cp ../app.yml {} \; && \
+		$(DIST_DIRS) cp ../README.md {} \; && \
+		$(DIST_DIRS) tar -zcf {}.tar.gz {} \; && \
+		$(DIST_DIRS) zip -r {}.zip {} \; && \
+		$(DIST_DIRS) rm -rf {} \; && \
+		sha256sum * > sha256sums.txt \
+	)
+
+test:
+	go test -v ./...
+
+lint:
+	golangci-lint run --config .golangci.yml && goimports -l -w . && go fmt ./... && go vet ./...
+
+down:
+	go list ./... && go mod verify
+
+tidy:
+	rm -f go.sum && go mod tidy -v
+
+clean:
+	rm -rf bin

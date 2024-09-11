@@ -7,7 +7,14 @@ import (
 	"inspect/pkg/global"
 	"inspect/pkg/init/log"
 	"inspect/pkg/init/viper"
+	"runtime"
 	"strings"
+)
+
+var (
+	Version   = "unknown"
+	GitCommit = "unknown"
+	BuildTime = "unknown"
 )
 
 var RootCmd = &cobra.Command{
@@ -19,6 +26,7 @@ var RootCmd = &cobra.Command{
 		viper.Init()
 		saveCommand(cmd)
 	},
+	Version: version(),
 }
 
 // Execute executes the root level command.
@@ -32,6 +40,7 @@ func init() {
 	RootCmd.PersistentFlags().BoolVar(&global.Conf.SuppressWarnings, "suppress-warnings", false, "禁止所有异常")
 	RootCmd.PersistentFlags().BoolVar(&global.Conf.ErrorOnWarning, "error-on-warning", false, "将任何警告视为错误")
 	RootCmd.PersistentFlags().StringSliceVarP(&global.Conf.Files, "file", "f", []string{}, "配置文件")
+	RootCmd.SetVersionTemplate(`{{.Version}}`)
 }
 
 func saveCommand(cmd *cobra.Command) {
@@ -62,4 +71,14 @@ func saveCommand(cmd *cobra.Command) {
 	})
 	//wg.Wait()
 	global.Conf.Command = cmdStr.String()
+}
+
+func version() string {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("Version:    %s\n", Version))
+	sb.WriteString(fmt.Sprintf("Git commit: %s\n", GitCommit))
+	sb.WriteString(fmt.Sprintf("Build time: %s\n", BuildTime))
+	sb.WriteString(fmt.Sprintf("Go version: %s\n", runtime.Version()))
+	sb.WriteString(fmt.Sprintf("OS/Arch:    %s/%s\n", runtime.GOOS, runtime.GOARCH))
+	return sb.String()
 }

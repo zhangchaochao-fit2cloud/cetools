@@ -1,0 +1,8 @@
+nodes:
+  - Addr:
+    User:
+    Password:
+    AuthMode:
+    Type: CE
+docker:
+  sock: unix:///var/run/docker.sock

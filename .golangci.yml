@@ -1,0 +1,12 @@
+run:
+  allow-parallel-runners: true
+linters:
+  enable:
+    - revive
+  disable:
+    - errcheck
+linters-settings:
+  revive:
+    rules:
+      - name: unused-parameter
+        disabled: true
