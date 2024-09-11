@@ -30,3 +30,4 @@ output/
 .DS_Store
 test*
 app.yml
+bin/

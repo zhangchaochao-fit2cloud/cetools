@@ -10,7 +10,7 @@ type Logger struct {
 }
 
 func (log *Logger) Format(prefix, format string, a ...any) {
-	fmt.Print(log.SFormat(prefix, format, a))
+	fmt.Print(log.SFormat(prefix, format, a...))
 }
 
 func (log *Logger) SFormat(prefix, format string, a ...any) string {
@@ -36,7 +36,7 @@ func (log *Logger) Info(format string, a ...any) {
 }
 
 func (log *Logger) SInfo(format string, a ...any) string {
-	return log.SFormat(constant.Green, format, a)
+	return log.SFormat(constant.Green, format, a...)
 }
 
 func (log *Logger) Title(format string, a string) {
@@ -44,33 +44,29 @@ func (log *Logger) Title(format string, a string) {
 	width := 20
 	// 计算两边空格的长度
 	padding := width - len(a)
-	//padding := width - utf8.RuneCountInString(a)
-	//fmt.Println("length", utf8.RuneCountInString(a))
 	// 计算左侧空格数
 	leftPadding := padding / 2
 
 	// 计算右侧空格数
 	rightPadding := padding - leftPadding
-	//fmt.Println("leftPadding", leftPadding)
-	//fmt.Println("rightPadding", rightPadding)
 	content := fmt.Sprintf("%s%s%s", strings.Repeat(" ", leftPadding), a, strings.Repeat(" ", rightPadding))
 	log.Format(constant.Green, format, content)
 }
 
 func (log *Logger) Warning(format string, a ...any) {
-	log.Format(constant.Yellow, format, a)
+	log.Format(constant.Yellow, format, a...)
 }
 
 func (log *Logger) SWarning(format string, a ...any) string {
-	return log.SFormat(constant.Yellow, format, a)
+	return log.SFormat(constant.Yellow, format, a...)
 }
 
 func (log *Logger) Error(format string, a ...any) {
-	log.Format(constant.Red, format, a)
+	log.Format(constant.Red, format, a...)
 }
 
 func (log *Logger) SError(format string, a ...any) string {
-	return log.SFormat(constant.Red, format, a)
+	return log.SFormat(constant.Red, format, a...)
 }
 
 //func NewLogger() *Logger {
