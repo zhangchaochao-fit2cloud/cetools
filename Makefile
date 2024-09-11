@@ -1,12 +1,11 @@
 PROGRAM    			:= ce-tool
-BASE_PAH 			:= $(shell pwd)
-VERSION    			:= 0.1.0
-CODE_REPOSITORY     := github.com/zhangchaochao-fit2cloud/cetools
+VERSION    			?= 0.1.0
 LDFLAGS     		?= "-s -w -X cetool/pkg/version.Version=$(VERSION) -X cetool/pkg/version.GitCommit=$(shell git rev-parse --short HEAD) -X 'cetool/pkg/version.BuildTime=$(shell date '+%Y-%m-%d %H:%M:%S')'"
 GOBUILD_ENV 		= GO111MODULE=on CGO_ENABLED=0
 GOBUILD     		= go build -o bin/$(PROGRAM) -a -ldflags $(LDFLAGS)
 GOX         		= go run github.com/mitchellh/gox
-TARGETS     		:= darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64
+#GGOX         		= go get github.com/mitchellh/gox
+TARGETS     		?= darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64
 DIST_DIRS   		:= find * -maxdepth 0 -type d -exec
 
 .PHONY: build linux local cross-build release test lint down tidy clean
@@ -29,7 +28,7 @@ release: cross-build
 	( \
 		cd bin && \
 		$(DIST_DIRS) cp ../LICENSE {} \; && \
-		$(DIST_DIRS) cp ../app.yml {} \; && \
+		$(DIST_DIRS) cp ../app-example.yml {} \; && \
 		$(DIST_DIRS) cp ../README.md {} \; && \
 		$(DIST_DIRS) tar -zcf {}.tar.gz {} \; && \
 		$(DIST_DIRS) zip -r {}.zip {} \; && \
