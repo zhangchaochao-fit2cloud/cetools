@@ -47,7 +47,7 @@ func GenerateNodeInfo() error {
 		global.Print.Info("**************** %s ****************", "节点 "+node.Addr+" 信息")
 		ss := service.NewISSHService()
 
-		command := "/tmp/chao/cetools inspect -n "
+		command := "ce-tool inspect -n "
 		if GlobalUploadBin {
 			tools, err := ss.UploadTools(node)
 			if err != nil {

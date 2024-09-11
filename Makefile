@@ -30,7 +30,7 @@ build_backend_on_darwin:
     && GOOS=linux GOARCH=amd64 $(GOBUILD) -trimpath -ldflags '-s -w'  -o $(BUILD_PATH)/$(APP_NAME) $(MAIN)
 
 linux:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o cetools
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ce-tool
 
 build_all: build_frontend build_backend_on_linux
 

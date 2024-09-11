@@ -54,9 +54,12 @@ func GetContainerStats(statMap map[string]interface{}) (string, string, string) 
 
 	cpuDelta := totalUsage - preTotalUsage
 	systemCpuDelta := systemCpu - preSystemCpuUsage
-	numberOfCores := cpuStatInfo["online_cpus"].(float64)
+	numberOfCores := float64(0)
+	if cpuStatInfo["online_cpus"] != nil {
+		numberOfCores = cpuStatInfo["online_cpus"].(float64)
+	}
 	var cpuPercent = ""
-	if systemCpuDelta >= 0 {
+	if systemCpuDelta > 0 {
 		cpuPercent = Percent((cpuDelta / systemCpuDelta) * numberOfCores * 100)
 	}
 	return memUsed, memLimit, cpuPercent

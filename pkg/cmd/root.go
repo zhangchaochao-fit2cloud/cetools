@@ -11,7 +11,7 @@ import (
 )
 
 var RootCmd = &cobra.Command{
-	Use:           "cetools",
+	Use:           "ce-tool",
 	Short:         "CloudExplorer 的巡检和高可用部署工具",
 	SilenceErrors: true,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -36,7 +36,7 @@ func init() {
 
 func saveCommand(cmd *cobra.Command) {
 	var cmdStr strings.Builder
-	//cmdStr.WriteString("/tmp/chao/cetools inspect -r ")
+	//cmdStr.WriteString("ce-tool inspect -r ")
 	//var (
 	//	wg sync.WaitGroup
 	//)

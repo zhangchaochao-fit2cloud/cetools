@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"inspect/pkg/configs"
 	"inspect/pkg/utils/ssh"
 	"os"
@@ -66,7 +65,7 @@ func (s *SSHService) UploadTools(node configs.Node) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Println(executable)
+	//fmt.Println(executable)
 
 	//con := ssh.Build(node)
 	run, err := s.Run(node, "ls -l "+executable)
