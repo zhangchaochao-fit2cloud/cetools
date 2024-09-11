@@ -2,8 +2,8 @@ package ssh
 
 import (
 	"bytes"
+	"cetool/pkg/configs"
 	"fmt"
-	"inspect/pkg/configs"
 	"io"
 	"strings"
 	"sync"

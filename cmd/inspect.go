@@ -1,13 +1,13 @@
 package cmd
 
 import (
+	"cetool/pkg/global"
+	"cetool/pkg/service"
+	u "cetool/pkg/utils"
+	"cetool/pkg/utils/cmp"
+	"cetool/pkg/utils/table"
 	"fmt"
 	"github.com/spf13/cobra"
-	"inspect/pkg/global"
-	"inspect/pkg/service"
-	u "inspect/pkg/utils"
-	"inspect/pkg/utils/cmp"
-	"inspect/pkg/utils/table"
 )
 
 var (

@@ -1,8 +1,8 @@
 package logger
 
 import (
+	"cetool/pkg/constant"
 	"fmt"
-	"inspect/pkg/constant"
 	"strings"
 )
 

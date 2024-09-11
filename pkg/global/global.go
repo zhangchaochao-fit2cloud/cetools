@@ -1,11 +1,11 @@
 package global
 
 import (
+	"cetool/pkg/configs"
+	"cetool/pkg/dto"
+	"cetool/pkg/utils/logger"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"inspect/pkg/configs"
-	"inspect/pkg/dto"
-	"inspect/pkg/utils/logger"
 )
 
 var (

@@ -1,15 +1,15 @@
 package cmp
 
 import (
+	"cetool/pkg/dto"
+	"cetool/pkg/utils/cmd"
+	"cetool/pkg/utils/docker"
 	"context"
 	"fmt"
 	"github.com/compose-spec/compose-go/v2/loader"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/joho/godotenv"
-	"inspect/pkg/dto"
-	"inspect/pkg/utils/cmd"
-	"inspect/pkg/utils/docker"
 	"path"
 	"regexp"
 	"strings"

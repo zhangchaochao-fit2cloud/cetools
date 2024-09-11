@@ -1,12 +1,12 @@
 package docker
 
 import (
+	"cetool/pkg/dto"
+	"cetool/pkg/global"
+	"cetool/pkg/utils"
 	"context"
 	"fmt"
 	"github.com/docker/docker/api/types/network"
-	"inspect/pkg/dto"
-	"inspect/pkg/global"
-	"inspect/pkg/utils"
 	"os"
 	"strconv"
 	"strings"

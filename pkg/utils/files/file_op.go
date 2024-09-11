@@ -2,8 +2,8 @@ package files
 
 import (
 	"bufio"
+	"cetool/pkg/utils/cmd"
 	"fmt"
-	"inspect/pkg/utils/cmd"
 	"io"
 	"io/fs"
 	"os"

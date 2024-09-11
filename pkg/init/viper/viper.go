@@ -1,10 +1,10 @@
 package viper
 
 import (
+	"cetool/pkg/configs"
+	"cetool/pkg/global"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
-	"inspect/pkg/configs"
-	"inspect/pkg/global"
 	"os"
 	"path"
 )

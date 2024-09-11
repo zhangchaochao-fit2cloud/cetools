@@ -1,20 +1,15 @@
 package cmd
 
 import (
+	"cetool/pkg/global"
+	"cetool/pkg/init/log"
+	"cetool/pkg/init/viper"
+	v "cetool/pkg/version"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"inspect/pkg/global"
-	"inspect/pkg/init/log"
-	"inspect/pkg/init/viper"
 	"runtime"
 	"strings"
-)
-
-var (
-	Version   = "unknown"
-	GitCommit = "unknown"
-	BuildTime = "unknown"
 )
 
 var RootCmd = &cobra.Command{
@@ -36,11 +31,11 @@ func Execute() error {
 }
 
 func init() {
+	RootCmd.SetVersionTemplate(`{{.Version}}`)
 	RootCmd.PersistentFlags().BoolVarP(&global.Conf.Verbose, "verbose", "v", false, "详细输出")
 	RootCmd.PersistentFlags().BoolVar(&global.Conf.SuppressWarnings, "suppress-warnings", false, "禁止所有异常")
 	RootCmd.PersistentFlags().BoolVar(&global.Conf.ErrorOnWarning, "error-on-warning", false, "将任何警告视为错误")
 	RootCmd.PersistentFlags().StringSliceVarP(&global.Conf.Files, "file", "f", []string{}, "配置文件")
-	RootCmd.SetVersionTemplate(`{{.Version}}`)
 }
 
 func saveCommand(cmd *cobra.Command) {
@@ -75,9 +70,9 @@ func saveCommand(cmd *cobra.Command) {
 
 func version() string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("Version:    %s\n", Version))
-	sb.WriteString(fmt.Sprintf("Git commit: %s\n", GitCommit))
-	sb.WriteString(fmt.Sprintf("Build time: %s\n", BuildTime))
+	sb.WriteString(fmt.Sprintf("Version:    %s\n", v.Version))
+	sb.WriteString(fmt.Sprintf("Git commit: %s\n", v.GitCommit))
+	sb.WriteString(fmt.Sprintf("Build time: %s\n", v.BuildTime))
 	sb.WriteString(fmt.Sprintf("Go version: %s\n", runtime.Version()))
 	sb.WriteString(fmt.Sprintf("OS/Arch:    %s/%s\n", runtime.GOOS, runtime.GOARCH))
 	return sb.String()

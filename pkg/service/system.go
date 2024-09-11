@@ -1,6 +1,11 @@
 package service
 
 import (
+	"cetool/pkg/constant"
+	"cetool/pkg/dto"
+	"cetool/pkg/global"
+	"cetool/pkg/utils"
+	"cetool/pkg/utils/cmd"
 	"encoding/json"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
@@ -8,11 +13,6 @@ import (
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
 	"github.com/shirou/gopsutil/net"
-	"inspect/pkg/constant"
-	"inspect/pkg/dto"
-	"inspect/pkg/global"
-	"inspect/pkg/utils"
-	"inspect/pkg/utils/cmd"
 	network "net"
 	"os"
 	"sort"

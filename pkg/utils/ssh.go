@@ -1,9 +1,9 @@
 package utils
 
 import (
+	"cetool/pkg/global"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh"
-	"inspect/pkg/global"
 	"net"
 	"strings"
 )

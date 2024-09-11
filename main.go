@@ -1,8 +1,8 @@
 package main
 
 import (
+	"cetool/cmd"
 	"fmt"
-	"inspect/pkg/cmd"
 	"os"
 )
 

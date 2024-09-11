@@ -1,9 +1,9 @@
 package utils
 
 import (
+	"cetool/pkg/constant"
+	"cetool/pkg/global"
 	"fmt"
-	"inspect/pkg/constant"
-	"inspect/pkg/global"
 	"strings"
 )
 

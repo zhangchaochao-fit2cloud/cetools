@@ -1,9 +1,9 @@
 package service
 
 import (
+	"cetool/pkg/configs"
+	"cetool/pkg/utils/ssh"
 	"context"
-	"inspect/pkg/configs"
-	"inspect/pkg/utils/ssh"
 	"os"
 	"path/filepath"
 	"strings"

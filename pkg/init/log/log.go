@@ -1,8 +1,8 @@
 package log
 
 import (
+	"cetool/pkg/global"
 	"github.com/sirupsen/logrus"
-	"inspect/pkg/global"
 )
 
 type errorOnWarningHook struct{}

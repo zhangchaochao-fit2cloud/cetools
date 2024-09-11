@@ -1,13 +1,15 @@
-PROGRAM     := ce-tool
-VERSION     := 0.1.0
-LDFLAGS     ?= "-s -w -X github.com/zhangchaochao-fit2cloud/cetools/pkg.cmd.version.Version=$(VERSION) -X github.com/zhangchaochao-fit2cloud/cetools/pkg.cmd.version.GitCommit=$(shell git rev-parse --short HEAD) -X 'github.com/zhangchaochao-fit2cloud/cetools/pkg.cmd.version.BuildTime=$(shell date '+%Y-%m-%d %H:%M:%S')'"
-GOBUILD_ENV = GO111MODULE=on CGO_ENABLED=0
-GOBUILD     = go build -o bin/$(PROGRAM) -a -ldflags $(LDFLAGS)
-GOX         = go run github.com/mitchellh/gox
-TARGETS     := darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64
-DIST_DIRS   := find * -maxdepth 0 -type d -exec
+PROGRAM    			:= ce-tool
+BASE_PAH 			:= $(shell pwd)
+VERSION    			:= 0.1.0
+CODE_REPOSITORY     := github.com/zhangchaochao-fit2cloud/cetools
+LDFLAGS     		?= "-s -w -X cetool/pkg/version.Version=$(VERSION) -X cetool/pkg/version.GitCommit=$(shell git rev-parse --short HEAD) -X 'cetool/pkg/version.BuildTime=$(shell date '+%Y-%m-%d %H:%M:%S')'"
+GOBUILD_ENV 		= GO111MODULE=on CGO_ENABLED=0
+GOBUILD     		= go build -o bin/$(PROGRAM) -a -ldflags $(LDFLAGS)
+GOX         		= go run github.com/mitchellh/gox
+TARGETS     		:= darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64
+DIST_DIRS   		:= find * -maxdepth 0 -type d -exec
 
-.PHONY: build linux cross-build release test lint down tidy clean
+.PHONY: build linux local cross-build release test lint down tidy clean
 
 all: build
 
@@ -16,6 +18,9 @@ build:
 
 linux:
 	GOOS=linux GOARCH=amd64 $(GOBUILD_ENV) $(GOBUILD)
+
+local:
+	$(GOBUILD_ENV) $(GOBUILD)
 
 cross-build: clean
 	$(GOBUILD_ENV) $(GOX) -ldflags $(LDFLAGS) -parallel=5 -output="bin/$(PROGRAM)-$(VERSION)-{{.OS}}-{{.Arch}}/$(PROGRAM)" -osarch='$(TARGETS)' .
